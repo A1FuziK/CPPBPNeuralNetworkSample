@@ -53,14 +53,42 @@ class BPNeuralNetwork{
 
 	double ***weightChange;
 
-	double transferFunction(double in)
+	double transferFunction(double in, bool outputLayer)
 	{
-		return (double)(1 / (1 + exp(-in))); //sigmoid
+		if (outputLayer)
+		{ //sigmoid for the output layer
+			return (double)(1 / (1 + exp(-in)));
+		}
+		else
+		{ //relu for the inner layers
+			if (in > 0)
+			{
+				return in;
+			}
+			else
+			{
+				return 0;
+			}
+		}
 	}
 
-	double transferFunctionDerivative(double in)
+	double transferFunctionDerivative(double in, bool outputLayer)
 	{
-		return (double)((1.0 - transferFunction(in)) * transferFunction(in)); //sigmoid derivative
+		if (outputLayer)
+		{ // sigmoid derivative for the output layer
+			return (double)((1.0 - transferFunction(in, outputLayer)) * transferFunction(in, outputLayer)); //sigmoid derivative
+		}
+		else
+		{ //relu derivative for the inner layers
+			if (in > 0)
+			{
+				return 1;
+			}
+			else
+			{
+				return 0;
+			}
+		}
 	}
 
 	std::vector<std::string> split(const std::string& s, char delimiter) {
@@ -203,7 +231,7 @@ public:
 
 		//calculate error difference for the output layer
 		for (int i = 0; i < layerSpec[layers - 1]; i++) {
-			delta[layers - 1][i] = transferFunctionDerivative(out[layers - 1][i]) * (tgt[i] - out[layers - 1][i]);
+			delta[layers - 1][i] = transferFunctionDerivative(out[layers - 1][i], true) * (tgt[i] - out[layers - 1][i]);
 		}
 
 		//calculate error difference for the other layers
@@ -214,7 +242,7 @@ public:
 					sum += delta[i + 1][k] * weight[i + 1][k][j];
 				}
 
-				delta[i][j] = transferFunctionDerivative(out[i][j]) * sum;
+				delta[i][j] = transferFunctionDerivative(out[i][j], false) * sum;
 			}
 		}
 
@@ -260,7 +288,7 @@ public:
 				//Add BIAS with (1.0 * weight) too
 				sum += weight[i][j][layerSpec[i - 1]];
 
-				out[i][j] = transferFunction(sum);
+				out[i][j] = transferFunction(sum, i == (layers - 1));
 			}
 		}
 	}
